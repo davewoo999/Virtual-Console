@@ -1,0 +1,34 @@
+module Ps2Receiver
+	(
+		input wire clk, reset, 
+		input wire [7:0] ps2d, // ps2 data 
+		input wire ps2c,    // ps2 key pressed
+		output reg rx_done_tick,         // ps2 receive done tick
+		output wire [7:0] rx_data        // data received 
+	);
+	
+		
+
+	reg [7:0] filter_reg;               // filter ps2 keys 1 press only no repeat
+
+	
+	always @(posedge clk, posedge reset)
+		if (reset)
+			begin
+			filter_reg <= 0;
+			rx_done_tick = 1'b0;
+			end
+		else
+			begin
+			rx_done_tick = 1'b0;
+			if (ps2c == 1'b1) begin
+				if (filter_reg != ps2d) begin
+					filter_reg = ps2d;
+					rx_data = ps2d;
+					rx_done_tick = 1'b1;
+				end
+			end
+			end
+
+
+endmodule
