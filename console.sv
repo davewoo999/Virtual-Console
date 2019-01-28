@@ -121,8 +121,8 @@ assign {SDRAM_CLK, SDRAM_CKE, SDRAM_A, SDRAM_BA, SDRAM_DQML, SDRAM_DQ, SDRAM_DQM
 assign VIDEO_ARX = status[1] ? 8'd16 : 8'd4;
 assign VIDEO_ARY = status[1] ? 8'd9  : 8'd3; 
 
-assign UART_RTS = 1'b1;
-assign UART_DTR = 1'b1;
+assign UART_RTS = UART_CTS;
+assign UART_DTR = UART_DSR;
 
 wire show_vga;
 assign show_vga = status[5];
