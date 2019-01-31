@@ -22,7 +22,7 @@ module FpgaVirtualConsole(
 //    output reg [7:0]                   segment1,
 //    output reg [7:0]                   segment2,
 //    output reg [15:0]                  led,
-	 input 										switch
+	 input 										cur_sw
     );
 
     // synchronize reset signal
@@ -91,7 +91,7 @@ module FpgaVirtualConsole(
 //        .sramDatai,
 //		  .sramDatao,
         .debug(vt100_debug),
-		  .switch
+		  .cur_sw
     );
 
 

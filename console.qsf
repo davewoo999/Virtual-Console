@@ -355,19 +355,19 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:sys/build_id.tcl"
 
 
 
-set_global_assignment -name VHDL_FILE "vga-small.vhd"
-set_global_assignment -name VHDL_FILE "vga-controller.vhd"
-set_global_assignment -name VHDL_FILE vga_textmode.vhd
-set_global_assignment -name VHDL_FILE font_rom.vhd
-set_global_assignment -name VHDL_FILE "colour-rom.vhd"
+set_global_assignment -name VHDL_FILE "src/display/vga-controller.vhd"
+set_global_assignment -name VHDL_FILE src/display/vga_textmode.vhd
+set_global_assignment -name QIP_FILE src/storage/VideoRam.qip
+set_global_assignment -name QIP_FILE src/storage/FontRom.qip
 set_global_assignment -name SOURCE_FILE DataType.svh
 set_global_assignment -name SYSTEMVERILOG_FILE console.sv
 set_global_assignment -name CDF_FILE jtag.cdf
 set_global_assignment -name QIP_FILE sys/sys.qip
+set_global_assignment -name QIP_FILE sys/pll_hdmi.qip
+set_global_assignment -name QIP_FILE sys/pll_hdmi_cfg.qip
 set_global_assignment -name SYSTEMVERILOG_FILE src/parser/TabControl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/utility/DivideMod.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/display/VideoController.sv
-set_global_assignment -name MIF_FILE src/storage/TextRamLogoBig.mif
 set_global_assignment -name SYSTEMVERILOG_FILE src/keyboard/ScancodeDecoder.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/keyboard/Ps2Translator.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/keyboard/FifoConsumer.sv
@@ -380,19 +380,11 @@ set_global_assignment -name SYSTEMVERILOG_FILE src/parser/GraphicsControl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/parser/ModeControl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/parser/TextControl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/parser/CursorControl.sv
-set_global_assignment -name MIF_FILE src/storage/TextRamDemo.mif
-set_global_assignment -name SYSTEMVERILOG_FILE src/display/FontShapeRenderer.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/parser/VT100Parser.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/parser/CommandsParser.sv
-set_global_assignment -name VERILOG_FILE src/storage/Textvga.v
 set_global_assignment -name QIP_FILE src/storage/TextRam.qip
-set_global_assignment -name QIP_FILE src/storage/FontRom.qip
-set_global_assignment -name SYSTEMVERILOG_FILE src/storage/SramController.sv
 set_global_assignment -name MIF_FILE src/storage/FontShape.mif
-set_global_assignment -name SYSTEMVERILOG_FILE src/display/VgaDisplayAdapter.sv
-set_global_assignment -name SYSTEMVERILOG_FILE src/display/TextRenderer.sv
 set_global_assignment -name SYSTEMVERILOG_FILE FpgaVirtualConsole.sv
-set_global_assignment -name SYSTEMVERILOG_FILE src/utility/LedDecoder.sv
 set_global_assignment -name VERILOG_FILE src/keyboard/Ps2Receiver.v
 set_global_assignment -name VERILOG_FILE src/utility/AsyncUartTransceiver.v
 set_global_assignment -name QIP_FILE src/keyboard/UartTxFifo.qip

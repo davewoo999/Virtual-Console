@@ -124,8 +124,8 @@ assign VIDEO_ARY = status[1] ? 8'd9  : 8'd3;
 assign UART_RTS = UART_CTS;
 assign UART_DTR = UART_DSR;
 
-wire show_vga;
-assign show_vga = status[5];
+wire full_cursor;
+assign full_cursor = status[5];
 
 
 
@@ -135,7 +135,7 @@ parameter CONF_STR = {
 	"-;",
 	"-;",
 	"O1,Aspect ratio,4:3,16:9;",
-	"O5,VGA,new,old;",
+	"O5,Cursor,small,full;",
 	"-;",
 	"R0,Reset;",
 	"V,v0.472.",`BUILD_DATE
@@ -167,12 +167,6 @@ pll pll
 wire [31:0] status;
 wire  [1:0] buttons;
 
-wire [15:0] joy1, joy2;
-wire  [7:0] joy1_x,joy1_y,joy2_x,joy2_y;
-
-wire [10:0] ps2_key;
-wire [24:0] ps2_mouse;
-
 wire        ioctl_download;
 wire  [7:0] ioctl_index;
 wire        ioctl_wr;
@@ -198,9 +192,6 @@ wire 			ps2_clk, ps2_data, mse_clk, mse_dat;
 
 Ps2Signal_t ps2;
 VgaSignal_t vga;
-SramInterface_t sramInterface;
-SramData_t sramDatai, sramDatao;
-
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 (
@@ -215,8 +206,6 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 
 	.RTC(RTC),
 
-	.ps2_key(ps2_key),
-	.ps2_mouse(ps2_mouse),
 	.ps2_kbd_clk_out(ps2_clk),
 	.ps2_kbd_data_out(ps2_data),
 	.ps2_mouse_clk_out(mse_clk),
@@ -241,12 +230,8 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.sd_buff_wr(sd_buff_wr),
 	.img_mounted(img_mounted),
 	.img_readonly(img_readonly),
-	.img_size(img_size),
+	.img_size(img_size)
 
-	.joystick_0(joy1),
-	.joystick_1(joy2),
-	.joystick_analog_0({joy1_y,joy1_x}),
-	.joystick_analog_1({joy2_y,joy2_x})
 );
 
 /////////////////  RESET  /////////////////////////
@@ -263,13 +248,9 @@ wire reset = RESET | status[0] | buttons[1] ;
 ///////////////////////////////////////////////////
 
 //wire UART_RXD, UART_TXD;
-wire [15:0] leds;
-wire [7:0] seg1,seg2;
-wire txd,rxd;
-assign rxd = txd;
 
-wire       press = ps2_key[9];
-wire [7:0] code    = ps2_key[7:0];
+//wire txd,rxd;
+//assign rxd = txd;
 
 assign ps2.clk = ps2_clk;
 assign ps2.data = ps2_data;
@@ -286,21 +267,13 @@ FpgaVirtualConsole FpgaVirtualConsole
 	.uartRx(UART_RXD),
 	.uartTx(UART_TXD),
 	.vga,
-//	.sramInterface,
-//	.sramDatao,
-//	.sramDatai,
-//	.segment1(seg1),
-//	.segment2(seg2),
-//	.led(leds),
-	.switch(show_vga)
+
+	.cur_sw(full_cursor)
 	
 );
 
 
-wire [7:0] audio_snr, audio_snl ;
-
-
-
+assign {AUDIO_L, AUDIO_R} = 'Z;
 assign AUDIO_MIX = 0;
 assign AUDIO_S = 0;
 wire ce_vid = 1; 
