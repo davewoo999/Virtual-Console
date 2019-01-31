@@ -13,7 +13,7 @@ module VideoController(
 //	 output  [`SRAM_DATA_WIDTH - 1:0]    sramDatai,			// [7:0]
     // debug
     output  logic[70:0]                 debug,
-	 input										switch
+	 input										cur_sw
     );
 
         // UART Receiver
@@ -71,7 +71,7 @@ module VideoController(
         .address_a(textRamRequestParser.address),
         .address_b(textRamRequestRenderer.address),
         .clock_a(clk100M),
-        .clock_b(clk200M),
+        .clock_b(clk100M),
         .data_a(textRamRequestParser.data),
         .data_b(textRamRequestRenderer.data),
         .wren_a(textRamRequestParser.wren),
@@ -79,21 +79,38 @@ module VideoController(
         .q_a(textRamResultParser),
         .q_b(textRamResultRenderer)
     );
+	 
+	 wire [8:0] vid_dati,vid_dato;
+	 wire [18:0] vid_addr_o,vid_addr_i;
+	 wire vid_wr;
+	 
+	 
+	 VideoRam VideoRam(
+		.clock(clk100M),
+		.data(vid_dati),
+		.rdaddress(vid_addr_o),
+		.wraddress(vid_addr_i),
+		.wren(vid_wr),
+		.q(vid_dato)
+	 );
 
 
     // Video controller module
     DisplayController controller(
-        .clk(clk200M),
+        .clk(clk25M),
+		  .fclk(clk100M),
         .rst,
         .blinkStatus,
         .cursor,
         .textRamResult(textRamResultRenderer),
         .textRamRequest(textRamRequestRenderer),
-//        .sramInterface,
-//        .sramDatai,
-//		  .sramDatao,
+        .vid_dati,
+        .vid_addr_o,
+		  .vid_addr_i,
+		  .vid_wr,
+		  .vid_dato,
         .vga,
-		  .switch
+		  .cur_sw
     );
 
 endmodule
