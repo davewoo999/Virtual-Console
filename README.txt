@@ -10,7 +10,8 @@ and no repeat on keys.
 ON FIRST USE
 log in as root 
 
-type clear to get rid of the test data
+type clear to get rid of the test data.  
+Use /src/storage/TextRamBlank.mif for TextRam on a recompile to start a clear screen.
 
 enter export TERM=xterm-256color (any changes made in linux for this terminal will not affect the xterm for PuTTy)
 
