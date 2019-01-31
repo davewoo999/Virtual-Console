@@ -23,7 +23,7 @@ down=\\e[B
 right=\\e[C
 left=\\e[D
 
-to run mc you need mc-a to run non unicode graphic characters
+to run mc you need mc -a to run non unicode graphic characters
 
 cursor keys do not work in vi or vim use hjkl 
 
