@@ -1,0 +1,4 @@
+FontShape1 == original
+FontShape2 == code page 437
+FontShape3 == debug numbers for non Alpha chars
+FontShape4 == spare

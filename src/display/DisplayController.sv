@@ -21,9 +21,8 @@ module DisplayController (
 
 	 wire hblank,vblank;
 	 wire [5:0] text_addr;
-//	 wire [2559:0] text_data;
 	 wire [3:0] videoR,videoG,videoB;
-	 assign n_vga.outClock = 1'b0;
+	 assign n_vga.Spare = 1'b0;
 	 assign n_vga.color.red = videoR[2:0];
 	 assign n_vga.color.green = videoG[2:0];
 	 assign n_vga.color.blue = videoB[2:0];	 
@@ -31,8 +30,8 @@ module DisplayController (
 	 
 	 assign vga = n_vga; 
 			assign textRamRequest.data = 32'b11111111111111111111111111111111;
-			assign textRamRequest.address = text_addr; //textRamRequest.address;
-//			assign text_data = textRamResult;
+			assign textRamRequest.address = text_addr;
+
 			assign textRamRequest.wren = 1'b0;
 	 
 	   vga_controller vga_controller
@@ -40,10 +39,10 @@ module DisplayController (
       .reset     ( rst),
       .clk    ( clk),
 
-      .hSync       ( n_vga.hSync),
-      .vSync       ( n_vga.vSync),
-		.hblank		( hblank),
-		.vblank		( vblank),
+      .Hsync       ( n_vga.hSync),
+      .Vsync       ( n_vga.vSync),
+		.Hblank		( hblank),
+		.Vblank		( vblank),
 		.vid_addr_o (vid_addr_o),
 
       .vid_dato (vid_dato),

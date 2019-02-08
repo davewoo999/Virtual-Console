@@ -1,83 +1,85 @@
-`include "DataType.svh"
+//`include "DataType.svh"
+
 module DisplayController (
     input                               clk,
+	 input                               fclk,
     input                               rst,
     input                               blinkStatus,
     input   Cursor_t                    cursor,
     input   TextRamResult_t             textRamResult,
     output  TextRamRequest_t            textRamRequest,
-    output  SramInterface_t             sramInterface,
-    inout   [`SRAM_DATA_WIDTH - 1:0]    sramData,
-    output  VgaSignal_t                 vga
+    output  [8:0]             			vid_dati,
+    output  [18:0]    						vid_addr_o,
+	 output  [18:0]    						vid_addr_i,
+	 output      								vid_wr,
+	 input  [8:0]             				vid_dato,
+    output  VgaSignal_t                 vga,
+	 input										cur_sw
     );
+	 
+	 VgaSignal_t                 n_vga;
 
-    // Sram controller module
-    SramRequest_t vgaRequest, rendererRequest;
-    SramResult_t vgaResult, rendererResult;
-    logic paintDone;
-    SramAddress_t vgaBaseAddress;
+	 wire hblank,vblank;
+	 wire [5:0] text_addr;
+//	 wire [2559:0] text_data;
+	 wire [3:0] videoR,videoG,videoB;
+	 assign n_vga.Spare = 1'b0;
+	 assign n_vga.color.red = videoR[2:0];
+	 assign n_vga.color.green = videoG[2:0];
+	 assign n_vga.color.blue = videoB[2:0];	 
+	 assign n_vga.de = ~(hblank | vblank);
+	 
+	 assign vga = n_vga; 
+			assign textRamRequest.data = 32'b11111111111111111111111111111111;
+			assign textRamRequest.address = text_addr; //textRamRequest.address;
+//			assign text_data = textRamResult;
+			assign textRamRequest.wren = 1'b0;
+	 
+	   vga_controller vga_controller
+	(
+      .reset     ( rst),
+      .clk    ( clk),
 
-    SramController sramController(
-        .clk,
-        .rst,
-        .sramInterface,
-        .sramData,
-        .vgaRequest,
-        .vgaResult,
-        .rendererRequest,
-        .rendererResult
-    );
+      .Hsync       ( n_vga.hSync),
+      .Vsync       ( n_vga.vSync),
+		.Hblank		( hblank),
+		.Vblank		( vblank),
+		.vid_addr_o (vid_addr_o),
 
+      .vid_dato (vid_dato),
 
-    // Font ROM module
+		.videoR           ( videoR),
+      .videoG           ( videoG),
+      .videoB           ( videoB)
+      );
+		
+		vga_textmode vga_textmode
+		(
+      .reset     ( rst),
+      .clk    ( clk),
+//		.fclk (fclk),
+      .cursor_y             ( cursor.x[5:0]),
+      .cursor_x           ( cursor.y[6:0]),
+		.char_addr(fontRomAddress),
+		.char_data(fontRomData),
+		.display_mem_addr (text_addr),
+      .display_mem_data (textRamResult),
+		.vid_dati           ( vid_dati),
+      .vid_addr_i           ( vid_addr_i),
+      .vid_wr           ( vid_wr),
+		.cur_sw				(cur_sw)
+		);
+		
+		    // Font ROM module
     FontRomData_t fontRomData;
     FontRomAddress_t fontRomAddress;
 
     FontRom fontRom(
         .aclr(rst),
         .address(fontRomAddress),
-        .clock(clk),
+        .clock(fclk),
         .q(fontRomData)
     );
-
-
-    // synchronize signals from other clock domain
-    logic blinkStatusReg1, blinkStatusReg2;
-    Cursor_t cursorReg1, cursorReg2;
-
-    always_ff @(posedge clk) begin
-        cursorReg1 <= cursor;
-        cursorReg2 <= cursorReg1;
-        blinkStatusReg1 <= blinkStatus;
-        blinkStatusReg2 <= blinkStatusReg1;
-    end
-
-    // Renderer module
-    TextRenderer renderer(
-        .clk,
-        .rst(rst),
-        .paintDone,
-        .ramRequest(rendererRequest),
-        .ramResult(rendererResult),
-        .vgaBaseAddress,
-        .textRamRequest,
-        .textRamResult,
-        .fontRomAddress,
-        .fontRomData,
-        .cursor(cursorReg2),
-        .blinkStatus(blinkStatusReg2)
-    );
-
-
-    // VGA module
-    VgaDisplayAdapter display(
-        .clk,
-        .rst,
-        .baseAddress(vgaBaseAddress),
-        .ramRequest(vgaRequest),
-        .ramResult(vgaResult),
-        .vga,
-        .paintDone
-    );
+		
 
 endmodule // DisplayController

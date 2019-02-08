@@ -1,15 +1,19 @@
 `include "DataType.svh"
 module VideoController(
+	 input                               clk200M,
     input                               clk100M,
     input                               clk50M,
+	 input                               clk25M,
     input                               rst,
     input                               uartRx,
-    output  VgaSignal_t                 vga,
+    output  VgaSignal_t                 vga,					// hsync,vsync,3 red 3 green 3 blue, outclock, de
     // sram read/write
-    output  SramInterface_t             sramInterface,
-    inout   [`SRAM_DATA_WIDTH - 1:0]    sramData,
+//    output  SramInterface_t             sramInterface,	// [17:0] address,cs oe_n, we_n
+//    input   [`SRAM_DATA_WIDTH - 1:0]    sramDatao,			// [7:0]
+//	 output  [`SRAM_DATA_WIDTH - 1:0]    sramDatai,			// [7:0]
     // debug
-    output  logic[70:0]                 debug
+    output  logic[70:0]                 debug,
+	 input										cur_sw
     );
 
         // UART Receiver
@@ -19,7 +23,8 @@ module VideoController(
     AsyncUartReceiver #(
         .ClkFrequency(100_000_000),
         .Baud(`BAUD_RATE)
-    ) uartReceiver(
+    ) 
+	 uartReceiver(
         .clk(clk100M),
         .RxD(uartRx),
         .RxD_data_ready(uartReady),
@@ -47,10 +52,10 @@ module VideoController(
 	VT100Parser vt100Parser(
         .clk(clk100M),
         .rst,
-        .dataReady(uartReady),
-        .data(uartDataReceived),
-        .ramRes(textRamResultParser),
-        .ramReq(textRamRequestParser),
+        .dataReady(uartReady),				// 1
+        .data(uartDataReceived),				// 8
+        .ramRes(textRamResultParser),		// 32
+        .ramReq(textRamRequestParser),		// [5:0] [2559:0] 1
         .debug(vt100_debug),
         .cursorInfo(cursor)
     );
@@ -66,7 +71,7 @@ module VideoController(
         .address_a(textRamRequestParser.address),
         .address_b(textRamRequestRenderer.address),
         .clock_a(clk100M),
-        .clock_b(clk50M),
+        .clock_b(clk100M),
         .data_a(textRamRequestParser.data),
         .data_b(textRamRequestRenderer.data),
         .wren_a(textRamRequestParser.wren),
@@ -74,19 +79,38 @@ module VideoController(
         .q_a(textRamResultParser),
         .q_b(textRamResultRenderer)
     );
+	 
+	 wire [8:0] vid_dati,vid_dato;
+	 wire [18:0] vid_addr_o,vid_addr_i;
+	 wire vid_wr;
+	 
+	 
+	 VideoRam VideoRam(
+		.clock(clk100M),
+		.data(vid_dati),
+		.rdaddress(vid_addr_o),
+		.wraddress(vid_addr_i),
+		.wren(vid_wr),
+		.q(vid_dato)
+	 );
 
 
     // Video controller module
     DisplayController controller(
-        .clk(clk50M),
+        .clk(clk25M),
+		  .fclk(clk100M),
         .rst,
         .blinkStatus,
         .cursor,
         .textRamResult(textRamResultRenderer),
         .textRamRequest(textRamRequestRenderer),
-        .sramInterface,
-        .sramData,
-        .vga
+        .vid_dati,
+        .vid_addr_o,
+		  .vid_addr_i,
+		  .vid_wr,
+		  .vid_dato,
+        .vga,
+		  .cur_sw
     );
 
 endmodule

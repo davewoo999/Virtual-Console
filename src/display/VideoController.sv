@@ -6,11 +6,7 @@ module VideoController(
 	 input                               clk25M,
     input                               rst,
     input                               uartRx,
-    output  VgaSignal_t                 vga,					// hsync,vsync,3 red 3 green 3 blue, outclock, de
-    // sram read/write
-//    output  SramInterface_t             sramInterface,	// [17:0] address,cs oe_n, we_n
-//    input   [`SRAM_DATA_WIDTH - 1:0]    sramDatao,			// [7:0]
-//	 output  [`SRAM_DATA_WIDTH - 1:0]    sramDatai,			// [7:0]
+    output  VgaSignal_t                 vga,					// hsync,vsync,3 red 3 green 3 blue, spare, de
     // debug
     output  logic[70:0]                 debug,
 	 input										cur_sw
@@ -95,7 +91,6 @@ module VideoController(
 	 );
 
 
-    // Video controller module
     DisplayController controller(
         .clk(clk25M),
 		  .fclk(clk100M),
