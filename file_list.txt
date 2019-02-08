@@ -1,0 +1,18 @@
+console.sv  calls 		FpgaVirtualConsole.sv
+						
+						KeyboardController.sv	Ps2Receiver.sv 		Ps2Translator.sv 		UartTxFifo.sv 	FifoConsumer.sv 		AsyncUartTransmitter.sv
+						
+						
+						VideoController.sv		VT100Parser.sv 		TextRam 				VideoRam		DisplayController.sv	AsyncUartReceiver.sv
+													|				TextRamMiSTer.mif						vga_controller.sv
+													|				or 	TextRamBlank.mif					vga_textmode.sv
+													|														FontRom.v
+													|														FontShape.mif
+													|		
+												BlinkGenerator.sv
+												CommandsParser.sv
+												CursorControl.sv	TabControl.sv
+												TextControl.sv		DivideMod.sv
+												ModeControl.sv
+												AttribControl.sv
+												GraphicsControl.sv	Color256Decoder.sv

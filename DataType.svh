@@ -41,7 +41,7 @@
 `define CHAR_EFFECT_OFFSET (`CHAR_BACKGROUND_OFFSET + `CHAR_BACKGROUND_LENGTH)
 `define CHAR_EFFECT_LENGTH $bits(CharEffect_t)
 
-`define FONT_ROM_ADDRESS_WIDTH 8
+`define FONT_ROM_ADDRESS_WIDTH 10
 `define FONT_ROM_DATA_WIDTH 96
 
 `define SRAM_ADDRESS_WIDTH 18
@@ -94,7 +94,7 @@ typedef struct packed {
     logic        hSync;
     logic        vSync;
     VgaColor_t   color;
-    logic        outClock;
+    logic        Spare;
     logic        de;
 } VgaSignal_t;
 

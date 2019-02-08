@@ -2,7 +2,7 @@
 //  Console
 // 
 //  Port to MiSTer.
-//  Dave Wood (Oldgit)
+//  Oldgit
 //
 //  Based on https://github.com/Harry-Chen/fpga-virtual-console
 //
@@ -50,8 +50,6 @@ module emu
 	output        VGA_HS,
 	output        VGA_VS,
 	output        VGA_DE,    // = ~(VBlank | HBlank)
-	output        VGA_F1,
-	output [1:0]  VGA_SL,
 
 	output        LED_USER,  // 1 - ON, 0 - OFF.
 
@@ -63,7 +61,7 @@ module emu
 
 	output [15:0] AUDIO_L,
 	output [15:0] AUDIO_R,
-	output        AUDIO_S, // 1 - signed audio samples, 0 - unsigned
+	output        AUDIO_S,   // 1 - signed audio samples, 0 - unsigned
 	output  [1:0] AUDIO_MIX, // 0 - no mix, 1 - 25%, 2 - 50%, 3 - 100% (mono)
 	input         TAPE_IN,
 
@@ -98,67 +96,59 @@ module emu
 	output        SDRAM_nCS,
 	output        SDRAM_nCAS,
 	output        SDRAM_nRAS,
-	output        SDRAM_nWE,
-
-	input         UART_CTS,
-	output        UART_RTS,
-	input         UART_RXD,
-	output        UART_TXD,
-	output        UART_DTR,
-	input         UART_DSR
+	output        SDRAM_nWE
 );
-	
-assign LED_USER  = ioctl_download ;
-assign LED_DISK  = 0;
-assign LED_POWER = 0;
 
-assign VGA_F1 = 0;
-
-assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
+assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = 0;
-assign {SDRAM_CLK, SDRAM_CKE, SDRAM_A, SDRAM_BA, SDRAM_DQML, SDRAM_DQ, SDRAM_DQMH, SDRAM_nCS, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nWE} = 'Z;
+ 
+assign LED_USER  = ioctl_download | (vsd_sel & sd_act);
+assign LED_DISK  = {1'b1,~vsd_sel & sd_act};
+assign LED_POWER = 0;
 
 assign VIDEO_ARX = status[1] ? 8'd16 : 8'd4;
 assign VIDEO_ARY = status[1] ? 8'd9  : 8'd3; 
 
-assign UART_RTS = UART_CTS;
-assign UART_DTR = UART_DSR;
-
-wire full_cursor;
-assign full_cursor = status[5];
-
-
+wire [1:0] scale = status[3:2];
 
 `include "build_id.v" 
 parameter CONF_STR = {
-	"Console;;",
+	"AcornAtom;;",
 	"-;",
+	"S,VHD;",
+	"OC,Autostart,Yes,No;",
 	"-;",
 	"O1,Aspect ratio,4:3,16:9;",
-	"O5,Cursor,small,full;",
+	"O23,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
+	"OA,Mouse as Joystick,Yes,No;",
+	"OB,Swap Joysticks,No,Yes;",
+	"-;",
+	"O4,colour,black,green;",
+	"O56,Char set,One,Two,Three,Four;",
+	"O79,Default video mode,0,1,2,3,4,5,6,7;",
 	"-;",
 	"R0,Reset;",
-	"V,v0.472.",`BUILD_DATE
+	"JA,Fire;",
+	"V,v1.00.",`BUILD_DATE
 };
 
 /////////////////  CLOCKS  ////////////////////////
 
 wire clk_sys;
-wire clk_50;
+wire clk_32;
+wire clk_16;
+wire clk_12M5;
 wire clk_25;
-wire clk_200;
-wire pll_locked;
-
 
 pll pll
 (
 	.refclk(CLK_50M),	// Fractional-N PLL - 50.0 MHz - 0.0 - direct
 	.rst(0),
-	.outclk_0(clk_sys),	// 100.0 MHz 
-	.outclk_1(clk_50),
-	.outclk_2(clk_25),
-	.outclk_3(clk_200),
-	.locked(pll_locked)
+	.outclk_0(clk_sys),	// 96.0 MHz - 96.000000 MHz - ps -     0ps -     0ps - 50%
+	.outclk_1(clk_32),
+	.outclk_2(clk_16),
+	.outclk_3(clk_25),
+	.outclk_4(clk_12M5)
 );
 
 
@@ -166,6 +156,12 @@ pll pll
 
 wire [31:0] status;
 wire  [1:0] buttons;
+
+wire [15:0] joy1, joy2;
+wire  [7:0] joy1_x,joy1_y,joy2_x,joy2_y;
+
+wire [10:0] ps2_key;
+wire [24:0] ps2_mouse;
 
 wire        ioctl_download;
 wire  [7:0] ioctl_index;
@@ -188,10 +184,7 @@ wire [63:0] img_size;
 wire        sd_ack_conf;
 
 wire [64:0] RTC;
-wire 			ps2_clk, ps2_data, mse_clk, mse_dat;
-
-Ps2Signal_t ps2;
-VgaSignal_t vga;
+wire 			ps2.clk, ps2.data, mse_clk, mse_dat;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 (
@@ -206,8 +199,10 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 
 	.RTC(RTC),
 
-	.ps2_kbd_clk_out(ps2_clk),
-	.ps2_kbd_data_out(ps2_data),
+	.ps2_key(ps2_key),
+	.ps2_mouse(ps2_mouse),
+	.ps2_kbd_clk_out(ps2.clk),
+	.ps2_kbd_data_out(ps2.data),
 	.ps2_mouse_clk_out(mse_clk),
 	.ps2_mouse_data_out(mse_dat),
 
@@ -216,8 +211,6 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.ioctl_wr(ioctl_wr),
 	.ioctl_addr(ioctl_addr),
 	.ioctl_dout(ioctl_dout),
-	
-	.uart_mode(16'b000_11111_000_11111),
 
 	.sd_lba(sd_lba),
 	.sd_rd(sd_rd),
@@ -230,65 +223,92 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.sd_buff_wr(sd_buff_wr),
 	.img_mounted(img_mounted),
 	.img_readonly(img_readonly),
-	.img_size(img_size)
+	.img_size(img_size),
 
+	.joystick_0(joy1),
+	.joystick_1(joy2),
+	.joystick_analog_0({joy1_y,joy1_x}),
+	.joystick_analog_1({joy2_y,joy2_x})
 );
 
 /////////////////  RESET  /////////////////////////
 
-wire reset = RESET | status[0] | buttons[1] ;
+wire reset = RESET | status[0] | buttons[1] | (~status[12] & img_mounted);
+
+////////////////  MEMORY  /////////////////////////
+
+
+
+
+///////////////////////////////////////////////////
+////////////////  VIDEO  /////////////////////////
 
 
 ///////////////////////////////////////////////////
 
-
-assign ps2.clk = ps2_clk;
-assign ps2.data = ps2_data;
+wire uart_Rx, uart_Tx, avr_Tx, ext_ce, phi_2;
 
 FpgaVirtualConsole FpgaVirtualConsole
 (
-	.clk200M(clk_200),
-	.clk100M(clk_sys),
-	.clk50M(clk_50),
-	.clk25M(clk_25),
+	.clk( ),
 	.rst(reset),
 	.buttons(buttons),
-	.ps2,
-	.uartRx(UART_RXD),
-	.uartTx(UART_TXD),
-	.vga,
-
-	.cur_sw(full_cursor)
+	.ps2(ps2),
+	.uartRx(uart_Rx),
+	.uart(Tx(uart_Tx),
+	.vga(vga),
+	.sramInterface(sramInterface),
+	.sramData(sramData),
+	.segment1(segment1),
+	.segment2(segment2),
+	.led(led)
 	
 );
 
 
-assign {AUDIO_L, AUDIO_R} = 'Z;
+wire [7:0] audio_snr, audio_snl ;
+
+
+assign AUDIO_L = {audio_snl, audio_snl};
+//assign AUDIO_R = {audio_snr, audio_snr};
 assign AUDIO_MIX = 0;
 assign AUDIO_S = 0;
-wire ce_vid = 1; 
-wire hs, vs, de;
-wire hblank, vblank, ce_pix;
-wire [2:0] r,g,b;
 
-assign r = vga.color.red;
-assign g = vga.color.green;
-assign b = vga.color.blue;
-assign hs = vga.hSync;
-assign vs = vga.vSync;
-assign ce_pix = vga.Spare;
-assign de = vga.de;
+wire vga.hSync, vga.vSync, vga.de, vga.outClock;
+wire hblank, vblank, ce_pix, clk_sel;
+wire [2:0] vga.color.red,vga.color.green,vga.color.blue;
 
 
 assign CLK_VIDEO = clk_25;
-assign CE_PIXEL   = ce_vid;
-assign VGA_R = {r,r,r[1:0]};
-assign VGA_G = {g,g,g[1:0]};
-assign VGA_B = {b,b,b[1:0]};
-assign VGA_HS = ~hs;
-assign VGA_VS = ~vs;
-assign VGA_DE = de;
-assign VGA_SL = 2'd0;
+assign ce_pix = clk_12M5;
+video_mixer #(640, 1) mixer
+(
+	.clk_sys(CLK_VIDEO),
+	
+	.ce_pix(ce_pix),
+	.ce_pix_out(CE_PIXEL),
 
+	.hq2x(scale == 1),
+	.scanlines({scale==3, scale==2}),
+	.scandoubler(scale || forced_scandoubler),
+
+	.R({r,r[0]}),
+	.G({g,g[0]}),
+	.B({b,b[0]}),
+
+	.mono(0),
+
+	.HSync(hs),
+	.VSync(vs),
+	.HBlank(hblank),
+	.VBlank(vblank),
+
+	.VGA_R(VGA_R),
+	.VGA_G(VGA_G),
+	.VGA_B(VGA_B),
+	.VGA_VS(VGA_VS),
+	.VGA_HS(VGA_HS),
+	.VGA_DE(VGA_DE)
+);
 
 endmodule
