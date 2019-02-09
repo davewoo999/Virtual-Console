@@ -4,31 +4,28 @@ THIS IS NOT A FINISHED PROJECT - A WORK IN PROGRESS
 IMPORTANT
 *********
 
-If you do use this be aware it may not work as expected especially cursor keys and function keys. The keyboard appears to be USA 
-and no repeat on keys.
+If you do use this be aware it may not work as expected, the keyboard has no repeat on keys and some keys are not
+mapped or mapped for  non UK keyboard.
 
 ON FIRST USE
 log in as root 
 
-type clear to get rid of the test data.  
-Use /src/storage/TextRamBlank.mif for TextRam on a recompile to start a clear screen.
+enter export TERM=xterm 
+enter stty columns 80 rows 40. 
 
-enter export TERM=xterm-256color (any changes made in linux for this terminal will not affect the xterm for PuTTy)
-
-amend file ~/.config/mc/ini
-add the following to the end of file
-[terminal:xterm-256color]
-up=\\e[A
-down=\\e[B
-right=\\e[C
-left=\\e[D
+Linux asks the console for max cols and rows at log in, hence the cursor dropping to 
+the bottom of the screen. The console does not understand part of the Esc7 Esc[r Esc[999;999H Esc[6n sequence at present.
 
 to run mc you need mc -a to run non unicode graphic characters
 
-cursor keys do not work in vi or vim use hjkl 
+cursor keys should work - tested in mc and vi  vim
+The console used to transmit Esc[A Esc[B Esc[C Esc[D for the arrow keys (standard vt220)
+As vi and mc as standard require EscOA EscOB EscOC EscOD I changed the keyboard scan decoder. I have moved the 
+original escape sequences to shift and arrow if required.
 
-you will need to use export TERM=xterm-256color each time you log in. ( I changed /sbin/uartmode to include the xterm-256color in agetty
- so its there until I make a new SD card)
+you will need to use export TERM=xterm  and stty columns 80 rows 40 each time you log in unless
+you create a file called say mister and enter the export and stty commands. On login just type source mister to set
+the terminal type and screen size. 
 
 program notes
 -------------
