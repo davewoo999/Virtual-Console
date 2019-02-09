@@ -128,7 +128,13 @@ module ScancodeDecoder(
 
             else begin
                 // TODO: handle Shift + Special Key
-                valid = 0;
+					 unique case (scancode)
+					     8'h75: content = 24'h1B_5B_41; // Up Arrow -> `[A
+                    8'h72: content = 24'h1B_5B_42; // Down Arrow -> `[B
+                    8'h74: content = 24'h1B_5B_43; // Right Arrow -> `[C
+                    8'h6B: content = 24'h1B_5B_44; // Left Arrow -> `[D
+						  default: valid = 0;
+					 endcase
             end
         end
 
@@ -209,10 +215,10 @@ module ScancodeDecoder(
                     8'h71: content = 32'h1B_5B_33_7E; // Delete -> `[3~
                     8'h7D: content = 32'h1B_5B_35_7E; // Page Up -> `[5~
                     8'h7A: content = 32'h1B_5B_36_7E; // Page Down -> `[6~
-                    8'h75: content = 24'h1B_5B_41; // Up Arrow -> `[A
-                    8'h72: content = 24'h1B_5B_42; // Down Arrow -> `[B
-                    8'h74: content = 24'h1B_5B_43; // Right Arrow -> `[C
-                    8'h6B: content = 24'h1B_5B_44; // Left Arrow -> `[D
+                    8'h75: content = 24'h1B_4F_41; // Up Arrow -> `OA
+                    8'h72: content = 24'h1B_4F_42; // Down Arrow -> `OB
+                    8'h74: content = 24'h1B_4F_43; // Right Arrow -> `OC
+                    8'h6B: content = 24'h1B_4F_44; // Left Arrow -> `OD
                     8'h6C: content = 24'h1B_5B_48; // Home -> `[H
                     8'h69: content = 24'h1B_5B_46; // End -> `[F
                     default: valid = 0;
@@ -335,7 +341,14 @@ module ScancodeDecoder(
             end
 
             else begin
+					unique case(scancode)
                 // TODO: handle Shift + Special Key
+					     8'h75, // Up Arrow -> `[A
+                    8'h72, // Down Arrow -> `[B
+                    8'h74, // Right Arrow -> `[C
+                    8'h6B: // Left Arrow -> `[D
+						  length = 3;
+					endcase
             end
         end
 
@@ -423,10 +436,10 @@ module ScancodeDecoder(
                     8'h7A: // Page Down -> `[6~
                     length = 4;
 
-                    8'h75, // Up Arrow -> `[A
-                    8'h72, // Down Arrow -> `[B
-                    8'h74, // Right Arrow -> `[C
-                    8'h6B, // Left Arrow -> `[D
+                    8'h75, // Up Arrow -> `OA
+                    8'h72, // Down Arrow -> `OB
+                    8'h74, // Right Arrow -> `OC
+                    8'h6B, // Left Arrow -> `OD
                     8'h6C, // Home -> `[H
                     8'h69: // End -> `[F
                     length = 3;
