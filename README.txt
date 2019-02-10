@@ -8,6 +8,8 @@ If you do use this be aware it may not work as expected, the keyboard has no rep
 mapped or mapped for  non UK keyboard.
 
 ON FIRST USE
+Enter 2nd page of OSD and change UART connection to Console.
+
 log in as root 
 
 enter export TERM=xterm 
